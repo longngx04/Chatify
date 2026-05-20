@@ -10,3 +10,50 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model User {
+  id        String   @id @default(uuid())
+  username  String   @unique
+  email     String   @unique
+  password  String
+  githubId  String?
+  avatarUrl String?
+
+  messages  Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("users")
+}
+
+model Channel {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  type        String   @default("public") // "public" | "private" | "dm"
+
+  messages    Message[]
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("channels")
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  content        String   // Persisted as raw markdown
+  hasCodeSnippet Boolean  @default(false)
+
+  senderId       String
+  sender         User     @relation(fields: [senderId], references: [id])
+
+  channelId      String
+  channel        Channel  @relation(fields: [channelId], references: [id])
+
+  createdAt      DateTime @default(now())
+
+  @@index([channelId, createdAt])
+  @@index([senderId])
+  @@map("messages")
+}
